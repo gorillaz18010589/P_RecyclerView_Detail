@@ -24,6 +24,7 @@ linearLayoutManager.setRecycleChildrenOnDetach(boolean recycleChildrenOnDetach):
      getItemViewType()：返回在適配器中通過getItemViewType（）為該項目設置的類型，沒有在適配器上轉換那個方法的話，就是就是單一類型的項目類型。項目類型是用於實現不同的項目樣式。
      setIsRecyclable()：RecyclerView最大的特性就是它內部實現了一套高效的回收機制，而回收替代是ViewHolder為單位進行管理的，每個項目都會對應一個ViewHolder，都是都是會參與進回收 補充機制中。但可以通過該方法來標誌該ViewHolder不會被回收
  */
+
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,8 +33,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -46,12 +49,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private RecyclerView recyclerView;
     private List<Movie> moviess;
     private LinearLayoutManager linearLayoutManager;
     private Button btnRemove;
     private MovieRecyclerViewAdapter movieRecyclerViewAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,21 +70,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnRemove = findViewById(R.id.btnRemove);
         btnRemove.setOnClickListener(this);
         moviess = new ArrayList<>();
-        moviess.add(new Movie("大話西游","一個痛苦的愛情故事"));
-        moviess.add(new Movie("喜劇之王"," 愛情喜劇故事"));
-        moviess.add(new Movie("逃學威龍","校園喜劇故事"));
-
+        moviess.add(new Movie("大話西游", "一個痛苦的愛情故事"));
+        moviess.add(new Movie("喜劇之王", " 愛情喜劇故事"));
+        moviess.add(new Movie("逃學威龍", "校園喜劇故事"));
+        moviess.add(new Movie("逃學威龍", "校園喜劇故事"));
+        moviess.add(new Movie("逃學威龍", "校園喜劇故事"));
+        moviess.add(new Movie("逃學威龍", "校園喜劇故事"));
+        moviess.add(new Movie("逃學威龍", "校園喜劇故事"));
 
 
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
-    private void setHorizontalRecyclerView(){
+    private void setHorizontalRecyclerView() {
         linearLayoutManager = new LinearLayoutManager(
                 this,//1.要呈現的主要頁面
-                LinearLayoutManager.HORIZONTAL, //2.RecyclerView設定要左右滑還是上下滑的方向(HORIZONTAL/VERTICAL)
+                LinearLayoutManager.VERTICAL, //2.RecyclerView設定要左右滑還是上下滑的方向(HORIZONTAL/VERTICAL)
                 false  //3.設定滑動開始的方向(falser是由左到右／true由右到左)
         );
+
 
 //      linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);//RecyclerView設定要左右滑還是上下滑的方向(HORIZONTAL/VERTICAL)
         linearLayoutManager.setRecycleChildrenOnDetach(true);//設定是否回收子類得LinerLauput,搭配RecycledViewPool使用在特定場景可提高效能
@@ -107,9 +115,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                                "findLastVisibleItemPosition:" + findLastVisibleItemPosition
 //                ) ;
 
+                //如果看到第五個item
+                if (linearLayoutManager.findLastVisibleItemPosition() == 5) {
+
+                    ViewGroup.LayoutParams layoutParams = recyclerView.getChildAt(0).getLayoutParams();
+                    RecyclerView.ViewHolder viewHolder = recyclerView.getChildViewHolder(LayoutInflater.from(MainActivity.this).inflate(R.layout.linear_item,null));
+                    layoutParams.width = (ScreenUtils.getScreenWidth(MainActivity.this) - DpPxUtils.dp2Px(MainActivity.this, 70)) / 3;//
+
+                    dispatchTouchEvent(MotionEvent.obtain(SystemClock.uptimeMillis(), SystemClock.uptimeMillis(), MotionEvent.ACTION_CANCEL, 0, 0, 0)); //強制停止滑動
+                    Log.v("hank", "已出現超過5");
+                    recyclerView.setNestedScrollingEnabled(false);
+                    movieRecyclerViewAdapter.notifyDataSetChanged();
+                } else {
+                    Log.v("hank", "沒出現");
+
+                }
 
 
-            };
+            }
+
+            ;
         });
         recyclerView.setAdapter(movieRecyclerViewAdapter);
 
@@ -118,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.btnRemove:
                 reMoveItemNotifyDataSetChanged();
                 break;
@@ -177,21 +202,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             int adapterPosi = recyclerView.findContainingViewHolder(view)
                     .getAdapterPosition(); //使用場景為你更新數據,但在刷新前又要取得位置時使用
             int oldPosi = recyclerView.findContainingViewHolder(view).getOldPosition();
-            LogUtils.v( "logPosition => getLayoutPosition = " + layPosi);
-            LogUtils.v( "logPosition => getAdapterPosition = " + adapterPosi);
+            LogUtils.v("logPosition => getLayoutPosition = " + layPosi);
+            LogUtils.v("logPosition => getAdapterPosition = " + adapterPosi);
         }
     }
 
     public void btnGetAdapter(View view) {
-       int getItemCount = movieRecyclerViewAdapter.getItemCount(); //取得adapter李資料的總比數
-       long getItemId =  movieRecyclerViewAdapter.getItemId(recyclerView.getChildAdapterPosition(recyclerView.getChildAt(0)));
-       int getItemViewType = movieRecyclerViewAdapter.getItemViewType(recyclerView.getChildAdapterPosition(recyclerView.getChildAt(0)));
+        int getItemCount = movieRecyclerViewAdapter.getItemCount(); //取得adapter李資料的總比數
+        long getItemId = movieRecyclerViewAdapter.getItemId(recyclerView.getChildAdapterPosition(recyclerView.getChildAt(0)));
+        int getItemViewType = movieRecyclerViewAdapter.getItemViewType(recyclerView.getChildAdapterPosition(recyclerView.getChildAt(0)));
 
-        LogUtils.v("getItemCount:" + getItemCount +"/getItemId:" + getItemId +"/getItemViewType:" +getItemViewType);
+        LogUtils.v("getItemCount:" + getItemCount + "/getItemId:" + getItemId + "/getItemViewType:" + getItemViewType);
     }
 
 
-    public class MovieRecyclerViewAdapter extends RecyclerView.Adapter<MovieViewHolder>{
+    public class MovieRecyclerViewAdapter extends RecyclerView.Adapter<MovieViewHolder> {
         private List<Movie> movies;
 
         public MovieRecyclerViewAdapter(List<Movie> movies) {
@@ -201,7 +226,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @NonNull
         @Override
         public MovieViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.linear_item,parent,false);
+            View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.linear_item, parent, false);
             MovieViewHolder movieViewHolder = new MovieViewHolder(view);
             LogUtils.v("onCreateViewHolder");
             return movieViewHolder;
@@ -209,13 +234,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         public void onBindViewHolder(@NonNull MovieViewHolder holder, int position) {
+
+
             holder.tvMovieName.setText(movies.get(position).getName());
             holder.tvMovieContent.setText(movies.get(position).getContent());
             LogUtils.v("onBindViewHolder" + "/position:" + position);
             int getItemCount = movieRecyclerViewAdapter.getItemCount(); //取得adapter李資料的總比數
             int getItemViewType = movieRecyclerViewAdapter.getItemViewType(position);
 
-            LogUtils.v("onBindViewHolder => getItemCount:" + getItemCount +"/getItemId:"  +"/getItemViewType:" +getItemViewType);
+            LogUtils.v("onBindViewHolder => getItemCount:" + getItemCount + "/getItemId:" + "/getItemViewType:" + getItemViewType);
 
         }
 
@@ -226,16 +253,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
 
+
         @Override
         public long getItemId(int position) {
             LogUtils.v("getItemId:" + position);
             return super.getItemId(position);
         }
+
     }
 
 
-    public class MovieViewHolder extends RecyclerView.ViewHolder{
+    public class MovieViewHolder extends RecyclerView.ViewHolder {
         private TextView tvMovieName, tvMovieContent;
+
         public MovieViewHolder(@NonNull View itemView) {
             super(itemView);
             LogUtils.v("MovieViewHolder");
@@ -243,4 +273,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             tvMovieContent = itemView.findViewById(R.id.tvContent);
         }
     }
+
+
 }
